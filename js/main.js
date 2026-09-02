@@ -264,6 +264,7 @@ function updateProjectiles(dt) {
     if (dir.length() <= step) {
       if (p.aoe > 0) {
         for (const e of enemies.all.slice()) {
+          if (e.hp <= 0) continue; // skip enemies already killed this frame
           if (e.pos.distanceTo(p.target.pos) < p.aoe) enemies.hit(e, p.dmg);
         }
         towers.puff(p.target.pos.clone(), 0xffd7ad);
