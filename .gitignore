@@ -8,6 +8,10 @@ dist/
 build/
 *.log
 
+# Test artifacts (Playwright)
+test-results/
+playwright-report/
+
 # Editor
 .idea/
 .vscode/
