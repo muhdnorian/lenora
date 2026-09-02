@@ -35,7 +35,7 @@ const ui = LEN.ui;
 ui.bindInput();
 
 /* ---------------- game-flow controls (referenced above) ---------------- */
-function addScore(n) { state.score += n; }
+function addScore(n) { state.score += n; ui.markDirty(); }
 function setTowerType(i) { state.towerType = i; updateGhost(); };
 function toggleBuild() { state.buildMode = !state.buildMode; updateGhost(); }
 function togglePause() {
@@ -74,7 +74,7 @@ function startNextWave() {
   state.waveSpawnQueue = Math.floor(LEN.CFG.wave.countBase + state.wave * LEN.CFG.wave.countPerWave);
   state.spawning = true;
   ui.showBanner('Wave ' + state.wave, 'drifters appear…');
-  ui.updateHud(state);
+  ui.markDirty();
 }
 
 /* ---------------- touch / portrait detection ---------------- */
@@ -145,7 +145,7 @@ function tryPlace(col, row) {
   state.resources -= cfg.cost;
   towers.place(col, row, state.towerType);
   LEN.audio.blip(true);
-  ui.updateHud(state);
+  ui.markDirty();
   updateGhost();
 }
 
@@ -161,6 +161,7 @@ function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000);
   last = now;
   if (state.running && !state.paused && !state.gameOver) update(dt);
+  if (ui.consumeDirty()) ui.updateHud(state);   // HUD sync only on real state change (issue #35)
   ui.tick(dt);
   LEN.world.renderer.render(LEN.world.scene, camera);
 }
@@ -238,7 +239,7 @@ function updateGathering(dt) {
       if (state.resources >= LEN.RES_MAX) break;
     }
   }
-  if (gained) { LEN.audio.aura(); ui.updateHud(state); }
+  if (gained) { LEN.audio.aura(); ui.markDirty(); }
 }
 
 /* ---- towers target & fire ---- */
@@ -290,7 +291,6 @@ function updateProjectiles(dt) {
       p.mesh.position.add(dir.normalize().multiplyScalar(step));
     }
   }
-  ui.updateHud(state);
 }
 
 /* ---- enemies ---- */
@@ -322,8 +322,8 @@ function updateEnemies(dt) {
     if (e.pos.length() < 5) {
       state.lives -= (LEN.CFG.wave.dmgBase + state.wave * LEN.CFG.wave.dmgPerWave) * e.dmgMul;
       enemies.remove(e);
-      ui.updateHud(state);
-      if (state.lives <= 0) { state.lives = 0; ui.updateHud(state); gameOver(); return; }
+      ui.markDirty();
+      if (state.lives <= 0) { state.lives = 0; ui.markDirty(); gameOver(); return; }
     }
   }
 }

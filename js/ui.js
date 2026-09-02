@@ -11,8 +11,13 @@ LEN.ui = (function () {
   };
   const tbtns = [...document.querySelectorAll('.tbtn')];
   let bannerTimer = 0;
-  // last rendered values — skip DOM writes when nothing changed (updateHud is called every frame)
+  // last rendered values — skip DOM writes when nothing changed
   const last = { res: null, life: null, wave: null, score: null, dis: null };
+  // dirty flag: HUD is only re-synced after an actual state change, never per-frame
+  // from the sim hot loop (issue #35).
+  let dirty = true;
+  function markDirty() { dirty = true; }
+  function consumeDirty() { const d = dirty; dirty = false; return d; }
 
   function updateHud(state) {
     const res = Math.floor(state.resources);
@@ -71,5 +76,5 @@ LEN.ui = (function () {
     if (bannerTimer > 0) { bannerTimer -= dt; if (bannerTimer <= 0) el.wb.classList.remove('show'); }
   }
 
-  return { el, tbtns, updateHud, showBanner, toggleBuild, selectTower, syncTowerButtons, bindInput, tick };
+  return { el, tbtns, updateHud, markDirty, consumeDirty, showBanner, toggleBuild, selectTower, syncTowerButtons, bindInput, tick };
 })();
