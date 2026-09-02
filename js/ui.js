@@ -6,7 +6,8 @@ LEN.ui = (function () {
     wb: $('waveBanner'), wbT: $('waveBannerT'), wbS: $('waveBannerS'),
     buildToggle: $('buildToggle'), buildToggleT: $('buildToggleT'),
     pause: $('pause'), start: $('start'), play: $('playBtn'),
-    go: $('gameover'), goWave: $('goWave'), goScore: $('goScore'), restart: $('restart'),
+    go: $('gameover'), goWave: $('goWave'), goScore: $('goScore'), goBest: $('goBest'), goBestScore: $('goBestScore'), restart: $('restart'),
+    mute: $('mute'),
   };
   const tbtns = [...document.querySelectorAll('.tbtn')];
   let bannerTimer = 0;
@@ -54,11 +55,13 @@ LEN.ui = (function () {
     LEN.startGame();
   }
   function togglePause() { LEN.togglePause(); el.pause.textContent = LEN.getBuildOpts().paused ? '▶' : '⏸'; }
+  function toggleMute() { const muted = LEN.audio.toggleMute(); el.mute.textContent = muted ? '🔇' : '🔊'; el.mute.classList.toggle('muted', muted); }
 
   function bindInput() {
     tbtns.forEach((b, i) => b.addEventListener('click', () => selectTower(i)));
     el.buildToggle.addEventListener('click', toggleBuild);
     el.pause.addEventListener('click', togglePause);
+    el.mute.addEventListener('click', toggleMute);
     el.play.addEventListener('click', start);
     el.restart.addEventListener('click', () => window.location.reload());
   }
