@@ -30,6 +30,15 @@ high score. **Loss:** `lives` (`baseHP 100`) drops to 0.
 - **Camera:** a fixed offset follow-cam trails the player from above.
 - **Environment:** 46 low-poly decorative trees; fog; soft shadows.
 
+## Difficulty levels
+
+Before a run the player chooses a difficulty on the start overlay (`js/config.js` -> `CFG.difficulty`):
+- **Calm** — softer curve for a gentle intro (lower enemy HP/count/speed, forgiving leaks, 1.2× start resources).
+- **Normal** — the reference tower-defense curve.
+- **Relentless** — 1.4× enemy HP, 1.35× wave count, 1.15× speed, 1.5× leak damage, 0.8× start resources, short 5 s breathers.
+
+All pressure valves read `LEN.diff()` (enemy HP/speed via `js/enemies.js`, wave count & leak damage & calm via `js/main.js`), so difficulty scales one curve, not scattered numbers.
+
 ## Controls
 
 | Input | Action |
@@ -37,6 +46,7 @@ high score. **Loss:** `lives` (`baseHP 100`) drops to 0.
 | `W` / `A` / `S` / `D` (or arrows) | Move the gatherer |
 | `1` / `2` / `3` | Select Sprout / Cinder / Bramble |
 | `B` or `Space` (or click **Recruit**) | Toggle build ("recruit") mode |
+| Start overlay | Choose **Calm / Normal / Relentless** difficulty |
 | Click / tap on ground | Place the selected tower on the hovered cell |
 | `P` or `Esc` | Pause / resume |
 | Touch (joystick + recruit cards) | Same controls on mobile |
@@ -90,6 +100,8 @@ hits until it breaks — forcing enough sustained damage.
 - **Surge waves:** every `surgeEvery 4`th wave is a denser, faster-cadence rush
   (`surgeCountMul 1.45`, `surgeSpawnInterval 0.4` s) that breaks a passive wall.
 - **Leak damage** grows at `dmgPerWave 1.4` — a broken ring genuinely threatens the core.
+- **Difficulty presets** (Calm / Normal / Relentless) scale enemies, waves and leak
+  damage through one `LEN.diff()` curve; Normal matches the values above (see #53).
 - **Between waves:** after the field is cleared, a `calm 8` s breather before the next
   wave.
 - **Money/sinks:** starting budget 90 buys one Cinder or Sprout+Bramble etc.; income comes

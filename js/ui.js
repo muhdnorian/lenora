@@ -9,9 +9,11 @@ LEN.ui = (function () {
     pause: $('pause'), start: $('start'), play: $('playBtn'),
     go: $('gameover'), goWave: $('goWave'), goScore: $('goScore'), goBest: $('goBest'), goBestScore: $('goBestScore'), restart: $('restart'),
     stBest: $('stBestWave'), stBestScore: $('stBestScore'),
+    goDiff: $('goDiff'),
     mute: $('mute'),
   };
   const tbtns = [...document.querySelectorAll('.tbtn')];
+  const diffBtns = [...document.querySelectorAll('.diffbtn')];
   let bannerTimer = 0;
   // last rendered values — skip DOM writes when nothing changed
   const last = { res: null, life: null, wave: null, score: null, dis: null };
@@ -59,6 +61,10 @@ LEN.ui = (function () {
     bannerTimer = dur;
   }
 
+  function selectDifficulty(key) {
+    diffBtns.forEach(b => b.classList.toggle('sel', b.dataset.diff === key));
+  }
+
   function start() {
     LEN.audio.init();
     LEN.audio.resume();
@@ -72,6 +78,7 @@ LEN.ui = (function () {
 
   function bindInput() {
     tbtns.forEach((b, i) => b.addEventListener('click', () => selectTower(i)));
+    diffBtns.forEach(b => b.addEventListener('click', () => LEN.setDifficulty(b.dataset.diff)));
     el.buildToggle.addEventListener('click', toggleBuild);
     el.target.addEventListener('click', () => LEN.cycleTarget());
     el.pause.addEventListener('click', togglePause);
@@ -89,5 +96,5 @@ LEN.ui = (function () {
     if (bannerTimer > 0) { bannerTimer -= dt; if (bannerTimer <= 0) el.wb.classList.remove('show'); }
   }
 
-  return { el, tbtns, updateHud, markDirty, consumeDirty, showBanner, toggleBuild, selectTower, syncTowerButtons, updateTargetBtn, bindInput, tick };
+  return { el, tbtns, updateHud, markDirty, consumeDirty, showBanner, toggleBuild, selectTower, selectDifficulty, syncTowerButtons, updateTargetBtn, bindInput, tick };
 })();
