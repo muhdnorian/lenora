@@ -8,6 +8,11 @@ LEN.enemies = (function () {
     drifter: { color: 0x9aa7b8, r: 0.9,  hpMul: 1,    speedMul: 1,    dmgMul: 1,    barY: 2.5, glow: 0x8fd6e8 },
     racer:   { color: 0x7fc6d4, r: 0.55, hpMul: 0.45, speedMul: 2.0,  dmgMul: 0.6,  barY: 1.9, glow: 0x8fe0ee },
     tank:    { color: 0xb39bc4, r: 1.4,  hpMul: 3.2,  speedMul: 0.5,  dmgMul: 2.6,  barY: 3.1, glow: 0xd0b0f0 },
+    // wisp: a fast rusher that slips past weak walls and punishes slow builds (#55)
+    wisp:    { color: 0x9fc7a8, r: 0.6,  hpMul: 0.62, speedMul: 2.6,  dmgMul: 0.9,  barY: 2.0, glow: 0xa8e8b0 },
+    // bastion: an armored juggernaut — an armor pool absorbs every hit before its HP,
+    // forcing the player to invest sustained damage or let it through (#55)
+    bastion: { color: 0xd6a56a, r: 1.55, hpMul: 3.9,  speedMul: 0.42, dmgMul: 2.2,  barY: 3.4, glow: 0xffd79a, armorMul: 0.9 },
   };
 
   /* warden boss — appears every 5th wave, one of three rotating mechanics */
@@ -81,7 +86,9 @@ LEN.enemies = (function () {
   function pickType(wave) {
     const pool = [['drifter', 1]];
     if (wave >= 2) pool.push(['racer', Math.min(0.55, 0.22 + wave * 0.03)]);
+    if (wave >= 3) pool.push(['wisp', Math.min(0.5, 0.18 + wave * 0.03)]);
     if (wave >= 4) pool.push(['tank', Math.min(0.4, 0.12 + wave * 0.02)]);
+    if (wave >= 5) pool.push(['bastion', Math.min(0.3, 0.1 + wave * 0.015)]);
     let total = 0; for (const [, w] of pool) total += w;
     let r = Math.random() * total;
     for (const [t, w] of pool) { r -= w; if (r <= 0) return t; }
@@ -124,13 +131,16 @@ LEN.enemies = (function () {
     g.position.set(Math.cos(a) * r, 0, Math.sin(a) * r);
     scene.add(g);
 
+    const armor = (type.armorMul || 0) > 0 ? hp * type.armorMul : 0;
+    bar.maxArmor = armor;
     const e = {
       group: g, pos: g.position.clone(), hp, maxHp: hp,
+      armor, maxArmor: armor,
       speed: CFG.wave.speed * type.speedMul * LEN.entities.random(0.9, 1.1),
       wob: Math.random() * 6.28, killVal: Math.round(12 * type.hpMul),
       type, glow, bar, dmgMul: type.dmgMul, collideR: type.r, attackCd: 0,
     };
-    LEN.bars.draw(bar, hp, hp);
+    LEN.bars.draw(bar, hp, hp, armor);
     enemies.push(e);
     return e;
   }
@@ -147,8 +157,13 @@ LEN.enemies = (function () {
       }
       return false;
     }
+    // armor absorbs hits first; once broken the remaining damage spills into health (#55)
+    if (e.armor > 0) {
+      const absorbed = Math.min(e.armor, dmg);
+      e.armor -= absorbed; dmg -= absorbed;
+    }
     e.hp -= dmg;
-    LEN.bars.draw(e.bar, e.hp, e.maxHp);
+    LEN.bars.draw(e.bar, Math.max(0, e.hp), e.maxHp, Math.max(0, e.armor));
     LEN.towers.puff(e.pos.clone(), e.boss ? 0xdcb7e8 : 0xeef3f5);
     LEN.fx.spark(e.pos.clone(), 0xe7f2f6, { count: 5, speed: 3.2, life: 0.5, size: 0.09 });
     if (e.hp <= 0) {
