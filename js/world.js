@@ -16,6 +16,10 @@ LEN.world = (function () {
   camera.position.set(0, 46, 46);
 
   /* lights */
+  const DAY_BG = new THREE.Color(0xf3f6f3);
+  const NIGHT_BG = new THREE.Color(0x161a2e);
+  const DAY_FOG = new THREE.Color(0xf3f6f3);
+  const NIGHT_FOG = new THREE.Color(0x10131f);
   const hemi = new THREE.HemisphereLight(0xffffff, 0xd9e7dc, 0.85);
   scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xfff4e0, 0.95);
@@ -29,6 +33,25 @@ LEN.world = (function () {
   const fill = new THREE.DirectionalLight(0xbcd9ff, 0.25);
   fill.position.set(-30, 30, -30);
   scene.add(fill);
+
+  /* gentle day/night cycle — t in [0,1): 0 = mid-morning light, wraps through dusk & night */
+  const DAY_SUN = new THREE.Color(0xfff4e0);
+  const NIGHT_SUN = new THREE.Color(0x9fb4ff);   // cool moonlight at night
+  let night = 0;   // 0 = full day, 1 = full night (exposed so enemies can glow brighter at night)
+  function setTime(t) {
+    const theta = t * Math.PI * 2;
+    // smooth bell: ~1 around midday, ~0.15 at deepest night
+    const day = 0.5 + 0.5 * Math.cos(theta);
+    night = 1 - day;
+    scene.background.copy(DAY_BG).lerp(NIGHT_BG, night * 0.85);
+    scene.fog.color.copy(DAY_FOG).lerp(NIGHT_FOG, night * 0.85);
+    scene.fog.near = 70 + 60 * night; scene.fog.far = 190 + 60 * night;
+    hemi.intensity = 0.32 + 0.55 * day;
+    sun.intensity = 0.14 + 0.85 * day;
+    sun.color.copy(DAY_SUN).lerp(NIGHT_SUN, night);
+    fill.intensity = 0.08 + 0.22 * night;
+    return day;
+  }
 
   /* ground plane (used for raycasting placement) */
   const ground = new THREE.Mesh(new THREE.PlaneGeometry(LEN.CFG.world * 2.4, LEN.CFG.world * 2.4),
@@ -74,5 +97,5 @@ LEN.world = (function () {
     renderer.setSize(window.innerWidth, window.innerHeight);
   });
 
-  return { renderer, scene, camera, sun, ground, ring };
+  return { renderer, scene, camera, sun, ground, ring, setTime, get night() { return night; } };
 })();
