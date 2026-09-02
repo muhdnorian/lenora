@@ -73,12 +73,26 @@ LEN.enemies = (function () {
     e.hp -= dmg;
     LEN.bars.draw(e.bar, e.hp, e.maxHp);
     LEN.towers.puff(e.pos.clone(), 0xeef3f5);
+    emitImpact(e.pos);
     if (e.hp <= 0) {
       scene.remove(e.group); remove(e);
       LEN.addScore(e.killVal + Math.floor(e.maxHp * 0.3));
       return true;
     }
     return false;
+  }
+  function emitImpact(at) {
+    // small burst of flying mineral splinters so hits read clearly
+    const n = at ? 4 : 0;
+    for (let i = 0; i < n; i++) {
+      const m = new THREE.Mesh(new THREE.SphereGeometry(0.07, 6, 5),
+        new THREE.MeshBasicMaterial({ color: 0xdff0ee, transparent: true, opacity: 0.9 }));
+      const a = Math.random() * Math.PI * 2;
+      const s = 2 + Math.random() * 3.5;
+      m.position.copy(at);
+      scene.add(m);
+      LEN.sparks.push({ mesh: m, dir: new THREE.Vector3(Math.cos(a), 1 + Math.random(), Math.sin(a)).normalize().multiplyScalar(s), life: 0 });
+    }
   }
   function remove(e) { const i = enemies.indexOf(e); if (i >= 0) enemies.splice(i, 1); }
 

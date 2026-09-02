@@ -64,6 +64,12 @@ LEN.towers = (function () {
     const bar = LEN.bars.make(3.2, 0.44);
     bar.sprite.position.y = cfg.barY; g.add(bar.sprite);
     LEN.bars.draw(bar, cfg.hp, cfg.hp);
+    // placement juice: a soft greeting ring + a warm sparkle puff
+    const pring = new THREE.Mesh(new THREE.RingGeometry(1.0, 1.25, 32),
+      new THREE.MeshBasicMaterial({ color: cfg.color, transparent: true, opacity: 0.55, side: THREE.DoubleSide, depthWrite: false }));
+    pring.rotation.x = -Math.PI / 2; pring.position.set(x, 0.1, z);
+    scene.add(pring); LEN.rings.push({ mesh: pring, life: 0, dur: 0.7, grow: 10, baseOp: 0.55 });
+    puff(new THREE.Vector3(x, 1.5, z), cfg.color);
     const t = { group: g, turret, orb, type, cfg, col, row, pos: new THREE.Vector3(x, 0, z), cooldown: 0, hp: cfg.hp, maxHp: cfg.hp, bar, collideR: cfg.collideR, dead: false };
     entities.push(t);
     return t;
@@ -92,6 +98,11 @@ LEN.towers = (function () {
       dmg: tower.cfg.dmg, aoe: tower.cfg.aoe, from: tower.pos.clone(),
       age: 0, maxAge: LEN.CFG.projectileMaxLife || 4,   // bound homing chase so a projectile can't follow one survivor forever
     });
+    // muzzle flash: a brief additive flare at the barrel
+    const fl = new THREE.Mesh(new THREE.SphereGeometry(0.4, 7, 5),
+      new THREE.MeshBasicMaterial({ color: 0xfff0c0, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false }));
+    fl.position.set(tower.pos.x, 3.0, tower.pos.z);
+    scene.add(fl); LEN.puffs.push({ mesh: fl, life: 0 });
   }
   function puff(pos, color) {
     const m = new THREE.Mesh(new THREE.SphereGeometry(0.36, 8, 6),

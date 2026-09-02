@@ -1,6 +1,8 @@
 /* main.js — game state, controllers, and the main simulation loop */
 LEN.projectiles = [];
 LEN.puffs = [];
+LEN.sparks = [];
+LEN.rings = [];
 
 LEN.startGame = startGame;
 LEN.togglePause = togglePause;
@@ -23,6 +25,7 @@ const state = {
   waveSpawnQueue: 0,
   spawnTimer: 0,
   gatherTimer: 0,
+  waveClearPlayed: false,
   gameOver: false,
 };
 
@@ -281,6 +284,30 @@ function updateProjectiles(dt) {
   ui.updateHud(state);
 }
 
+function sparks(pos, n, color) {
+  for (let i = 0; i < n; i++) {
+    const m = new THREE.Mesh(new THREE.SphereGeometry(0.08, 6, 5),
+      new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.95 }));
+    const a = Math.random() * Math.PI * 2;
+    const s = 2 + Math.random() * 4;
+    m.position.copy(pos);
+    LEN.world.scene.add(m);
+    LEN.sparks.push({ mesh: m, dir: new THREE.Vector3(Math.cos(a), 1 + Math.random(), Math.sin(a)).normalize().multiplyScalar(s), life: 0 });
+  }
+}
+function waveClearBurst() {
+  // expanding soft rings + a fountain of gold sparks at the protected core
+  if (LEN.audio.waveClear) LEN.audio.waveClear();
+  const c = LEN.world.scene;
+  const ring = new THREE.Mesh(new THREE.RingGeometry(0.9, 1.05, 40),
+    new THREE.MeshBasicMaterial({ color: 0xffe9c2, transparent: true, opacity: 0.5, side: THREE.DoubleSide, depthWrite: false }));
+  ring.rotation.x = -Math.PI / 2; ring.position.y = 0.4;
+  c.add(ring); LEN.rings.push({ mesh: ring, life: 0, dur: 0.9, grow: 16, baseOp: 0.5 });
+  for (let i = 0; i < 16; i++) {
+    sparks(new THREE.Vector3(0, 1.5, 0), 1, i % 2 ? 0xffe9c2 : 0xa8d8c8);
+  }
+}
+
 /* ---- enemies ---- */
 function updateEnemies(dt) {
   for (const e of enemies.all.slice()) {
@@ -329,6 +356,7 @@ function updateWaves(dt) {
   }
   if (!state.spawning && state.waveSpawnQueue <= 0 && enemies.all.length === 0) {
     state.calmTimer -= dt;
+    if (state.wave > 0 && !state.waveClearPlayed) { state.waveClearPlayed = true; waveClearBurst(); }
     if (state.calmTimer <= 0) startNextWave();
   }
 }
@@ -353,6 +381,28 @@ function updateAmbient(dt) {
     if (p.life > 0.5) {
       LEN.world.scene.remove(p.mesh);
       LEN.puffs.splice(LEN.puffs.indexOf(p), 1);
+    }
+  }
+  for (const s of LEN.sparks.slice()) {
+    s.life += dt;
+    s.mesh.position.add(s.dir.clone().multiplyScalar(dt));
+    s.mesh.position.y += dt * 0.6;
+    s.mesh.material.opacity = 1 - s.life * 2.2;
+    s.mesh.material.opacity = Math.max(0, s.mesh.material.opacity);
+    s.mesh.scale.multiplyScalar(1 - dt * 3);
+    if (s.life > 0.45) {
+      LEN.world.scene.remove(s.mesh);
+      LEN.sparks.splice(LEN.sparks.indexOf(s), 1);
+    }
+  }
+  for (const r of LEN.rings.slice()) {
+    r.life += dt;
+    const k = Math.min(1, r.life / r.dur);
+    r.mesh.scale.setScalar(1 + k * r.grow);
+    r.mesh.material.opacity = r.baseOp * (1 - k);
+    if (r.life >= r.dur) {
+      LEN.world.scene.remove(r.mesh);
+      LEN.rings.splice(LEN.rings.indexOf(r), 1);
     }
   }
 }
