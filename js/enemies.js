@@ -69,6 +69,7 @@ LEN.enemies = (function () {
   }
 
   function hit(e, dmg) {
+    if (e.hp <= 0) return false;   // already dead this frame — avoid double-awarding kill score
     e.hp -= dmg;
     LEN.bars.draw(e.bar, e.hp, e.maxHp);
     LEN.towers.puff(e.pos.clone(), 0xeef3f5);
