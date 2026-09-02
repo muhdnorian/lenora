@@ -3,7 +3,7 @@
 A gentle, dependency-free tower-defense game built with vanilla JavaScript and a single
 HTML5 canvas. No build step — open `index.html` in a browser and play.
 
-## Run it
+## Quick start
 
 ```bash
 # open directly
@@ -11,6 +11,21 @@ open index.html
 # or serve locally
 python3 -m http.server 8000   # then visit http://localhost:8000
 ```
+
+## Controls
+
+| Input | Action |
+|-------|--------|
+| `W A S D` / arrows | Move your gatherer |
+| `1 · 2 · 3` | Choose a unit (Sprout / Cinder / Bramble) |
+| `B` or `Space` | Toggle build mode |
+| Click / tap land | Place the selected tower |
+| `P` / `Esc` | Pause |
+
+Touch devices get a virtual joystick plus a recruit-card column.
+
+> Design details (tower/enemy stats, waves, economy) live in
+> [`docs/GAME_DESIGN.md`](docs/GAME_DESIGN.md).
 
 ## Project structure
 
@@ -26,6 +41,7 @@ python3 -m http.server 8000   # then visit http://localhost:8000
 | `js/ui.js` | HUD / UI wiring |
 | `js/audio.js` | Sound |
 | `js/bars.js` | Bars / meters |
+| `docs/GAME_DESIGN.md` | Design doc: loop, controls, stats, waves |
 
 ## Development workflow
 
