@@ -90,6 +90,7 @@ LEN.towers = (function () {
     LEN.projectiles.push({
       mesh: p, target: enemy, speed: tower.cfg.projSpeed,
       dmg: tower.cfg.dmg, aoe: tower.cfg.aoe, from: tower.pos.clone(),
+      age: 0, maxAge: LEN.CFG.projectileMaxLife || 4,   // bound homing chase so a projectile can't follow one survivor forever
     });
   }
   function puff(pos, color) {
