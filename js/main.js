@@ -167,6 +167,12 @@ const { camera } = LEN.world;
 const camPos = camera.position.clone();
 const camTarget = player.pos.clone();
 
+/* reusable scratch vectors — avoid per-frame Vector3 allocation churn in hot loops (#32) */
+const camDesired = new THREE.Vector3();
+const vAim = new THREE.Vector3();
+const vDir = new THREE.Vector3();
+const vToCore = new THREE.Vector3();
+
 /* ---------------- main loop ---------------- */
 let last = performance.now();
 function frame(now) {
@@ -224,8 +230,8 @@ function updatePlayer(dt) {
 
 /* ---- camera ---- */
 function updateCamera(dt) {
-  const desired = new THREE.Vector3(player.pos.x, 46, player.pos.z + 34);
-  camPos.lerp(desired, 1 - Math.pow(0.0008, dt));
+  camDesired.set(player.pos.x, 46, player.pos.z + 34);
+  camPos.lerp(camDesired, 1 - Math.pow(0.0008, dt));
   camTarget.lerp(player.pos, 1 - Math.pow(0.0006, dt));
   camera.position.copy(camPos);
   camera.lookAt(camTarget);
@@ -283,19 +289,21 @@ function updateTowers(dt) {
 
 /* ---- projectiles ---- */
 function updateProjectiles(dt) {
-  for (const p of LEN.projectiles.slice()) {
+  for (let i = LEN.projectiles.length - 1; i >= 0; i--) {
+    const p = LEN.projectiles[i];
     p.age += dt;
     if (!p.target || !p.target.group.parent || p.age > p.maxAge) {
       LEN.world.scene.remove(p.mesh);
-      LEN.projectiles.splice(LEN.projectiles.indexOf(p), 1);
+      LEN.projectiles.splice(i, 1);
       continue;
     }
-    const aim = p.target.pos.clone().add(new THREE.Vector3(0, 0.8, 0));
-    const dir = aim.sub(p.mesh.position);
+    vAim.copy(p.target.pos); vAim.y += 0.8;   // reusable scratch — no per-projectile Vector3 allocs
+    vDir.copy(vAim).sub(p.mesh.position);
     const step = p.speed * dt;
-    if (dir.length() <= step) {
+    if (vDir.length() <= step) {
       if (p.aoe > 0) {
-        for (const e of enemies.all.slice()) {
+        for (let j = enemies.all.length - 1; j >= 0; j--) {
+          const e = enemies.all[j];
           if (e.hp <= 0) continue; // skip enemies already killed this frame
           if (e.pos.distanceTo(p.target.pos) < p.aoe) enemies.hit(e, p.dmg);
         }
@@ -304,22 +312,23 @@ function updateProjectiles(dt) {
         enemies.hit(p.target, p.dmg);
       }
       LEN.world.scene.remove(p.mesh);
-      LEN.projectiles.splice(LEN.projectiles.indexOf(p), 1);
+      LEN.projectiles.splice(i, 1);
     } else {
-      p.mesh.position.add(dir.normalize().multiplyScalar(step));
+      p.mesh.position.add(vDir.normalize().multiplyScalar(step));
     }
   }
 }
 
 /* ---- enemies ---- */
 function updateEnemies(dt) {
-  for (const e of enemies.all.slice()) {
-    const toCore = new THREE.Vector3(-e.pos.x, 0, -e.pos.z);
+  for (let i = enemies.all.length - 1; i >= 0; i--) {
+    const e = enemies.all[i];
+    vToCore.set(-e.pos.x, 0, -e.pos.z);   // reusable scratch — no per-enemy Vector3 allocs
     e.wob += dt * 2;
-    toCore.x += Math.sin(e.wob) * 0.6;
-    toCore.z += Math.cos(e.wob * 0.7) * 0.6;
-    toCore.normalize().multiplyScalar(e.speed * dt);
-    e.pos.add(toCore);
+    vToCore.x += Math.sin(e.wob) * 0.6;
+    vToCore.z += Math.cos(e.wob * 0.7) * 0.6;
+    vToCore.normalize().multiplyScalar(e.speed * dt);
+    e.pos.add(vToCore);
     e.group.position.copy(e.pos);
     e.group.position.y = Math.abs(Math.sin(e.wob)) * 0.15;
     e.group.rotation.y = Math.atan2(-e.pos.x, -e.pos.z);
@@ -376,14 +385,15 @@ function updateAmbient(dt) {
   core.orb.position.y = 6.3 + Math.sin(performance.now() * 0.001) * 0.1;
   core.orb.material.emissiveIntensity = 0.9 + LEN.world.night * 2.2;   // core halo reads at night
   LEN.world.ring.rotation.z += dt * 0.1;
-  for (const p of LEN.puffs.slice()) {
+  for (let i = LEN.puffs.length - 1; i >= 0; i--) {
+    const p = LEN.puffs[i];
     p.life += dt;
     p.mesh.scale.setScalar(1 + p.life * 1.6);
     p.mesh.material.opacity = 0.8 - p.life * 1.6;
     p.mesh.position.y += dt * 1.2;
     if (p.life > 0.5) {
       LEN.world.scene.remove(p.mesh);
-      LEN.puffs.splice(LEN.puffs.indexOf(p), 1);
+      LEN.puffs.splice(i, 1);
     }
   }
 }
