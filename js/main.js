@@ -419,6 +419,8 @@ function updateAmbient(dt) {
 /* ---------------- init ---------------- */
 LEN.world.setTime(state.timeOfDay);   // apply the starting day phase before first frame
 ui.updateHud(state);
+// (#50) surface the persisted best wave / best score on the start screen
+{ let m = {}; try { m = JSON.parse(localStorage.getItem('lenora.meta') || '{}'); } catch (e) {} ui.el.stBest.textContent = m.bestWave || 0; ui.el.stBestScore.textContent = m.bestScore || 0; }
 camPos.set(player.pos.x + 6, 46, player.pos.z + 40);
 camTarget.copy(player.pos);
 updateGhost();
