@@ -191,6 +191,7 @@ function frame(now) {
   if (state.running && !state.paused && !state.gameOver) update(dt);
   if (ui.consumeDirty()) ui.updateHud(state);   // HUD sync only on real state change (issue #35)
   ui.tick(dt);
+  LEN.minimap.render(dt);
   LEN.world.renderer.render(LEN.world.scene, camera);
 }
 
@@ -428,6 +429,7 @@ function updateAmbient(dt) {
 
 /* ---------------- init ---------------- */
 LEN.world.setTime(state.timeOfDay);   // apply the starting day phase before first frame
+LEN.minimap.draw();
 ui.updateHud(state);
 // (#50) surface the persisted best wave / best score on the start screen
 { let m = {}; try { m = JSON.parse(localStorage.getItem('lenora.meta') || '{}'); } catch (e) {} ui.el.stBest.textContent = m.bestWave || 0; ui.el.stBestScore.textContent = m.bestScore || 0; }
