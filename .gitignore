@@ -1,0 +1,13 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Node / build (future-proofing, none needed yet)
+node_modules/
+dist/
+build/
+*.log
+
+# Editor
+.idea/
+.vscode/
