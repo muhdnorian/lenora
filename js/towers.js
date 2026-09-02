@@ -81,6 +81,27 @@ LEN.towers = (function () {
     }
   }
 
+  /* ---- sell / refund (issue #14) ---- */
+  const SELL_RATIO = 0.6;
+  function sell(t) {
+    if (!t || t.dead || t.group.parent !== scene) return 0;
+    scene.remove(t.group);
+    const i = entities.indexOf(t); if (i >= 0) entities.splice(i, 1);
+    return Math.floor(t.cfg.cost * SELL_RATIO);
+  }
+  function pickFromScreen(clientX, clientY) {
+    const v = new THREE.Vector2((clientX / window.innerWidth) * 2 - 1, -(clientY / window.innerHeight) * 2 + 1);
+    const ray = new THREE.Raycaster();
+    ray.setFromCamera(v, camera);
+    let best = null, bestD = Infinity;
+    for (const t of entities) {
+      if (t.dead || !t.group.parent) continue;
+      const hits = ray.intersectObject(t.group, true);
+      if (hits.length && hits[0].distance < bestD) { bestD = hits[0].distance; best = t; }
+    }
+    return best;
+  }
+
   /* ---- projectiles ---- */
   function fire(tower, enemy) {
     const p = new THREE.Mesh(new THREE.SphereGeometry(0.24, 10, 8),
@@ -112,10 +133,14 @@ LEN.towers = (function () {
     marker.position.y = 0.15;
     const rng = buildUnitGroup(0);
     rng.g.traverse(o => { if (o.isMesh) o.material = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.35, depthWrite: false }); });
-    g.add(ringG, marker, rng.g);
+    // fat ring that shows the selected tower's firing range on hover (issue #9)
+    const rangeRing = new THREE.Mesh(new THREE.RingGeometry(0.95, 1, 48),
+      new THREE.MeshBasicMaterial({ color: 0x6fa8a0, transparent: true, opacity: 0.28, side: THREE.DoubleSide, depthWrite: false }));
+    rangeRing.rotation.x = -Math.PI / 2; rangeRing.position.y = 0.1;
+    g.add(ringG, marker, rng.g, rangeRing);
     scene.add(g);
     g.visible = false;
-    return { g, rng };
+    return { g, rng, rangeRing };
   })();
 
   const ray = new THREE.Raycaster();
@@ -143,6 +168,10 @@ LEN.towers = (function () {
     const color = ok ? cfg.color : 0xe07a7a;
     ghost.g.position.set(x, 0, z);
     ghost.rng.g.traverse(o => { if (o.isMesh) o.material.color.setHex(color); });
+    // scale + color the range indicator to the selected tower (#9)
+    ghost.rangeRing.scale.setScalar(cfg.range);
+    ghost.rangeRing.material.color.setHex(color);
+    ghost.rangeRing.material.opacity = 0.25;
     ghost.g.visible = buildMode && mouseOnGround;
     ghost.rng.g.visible = buildMode && mouseOnGround;
   }
@@ -160,5 +189,5 @@ LEN.towers = (function () {
     }
   }
 
-  return { entities, place, damageUnit, fire, puff, cellValid, updateGhost, pointerEvent, hoverCell, isMouseOnGround: () => mouseOnGround };
+  return { entities, place, damageUnit, sell, pickFromScreen, fire, puff, cellValid, updateGhost, pointerEvent, hoverCell, isMouseOnGround: () => mouseOnGround };
 })();

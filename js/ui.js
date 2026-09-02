@@ -5,6 +5,7 @@ LEN.ui = (function () {
     res: $('resVal'), life: $('lifeVal'), wave: $('waveVal'), score: $('scoreVal'),
     wb: $('waveBanner'), wbT: $('waveBannerT'), wbS: $('waveBannerS'),
     buildToggle: $('buildToggle'), buildToggleT: $('buildToggleT'),
+    target: $('targetBtn'), targetT: $('targetVal'),
     pause: $('pause'), start: $('start'), play: $('playBtn'),
     go: $('gameover'), goWave: $('goWave'), goScore: $('goScore'), goBest: $('goBest'), goBestScore: $('goBestScore'), restart: $('restart'),
     mute: $('mute'),
@@ -40,6 +41,11 @@ LEN.ui = (function () {
   function syncTowerButtons() {
     tbtns.forEach((b, i) => b.classList.toggle('sel', i === LEN.getBuildOpts().towerType));
   }
+  function updateTargetBtn() {
+    const m = LEN.getTargetMode();
+    el.targetT.textContent = m.label;
+    el.target.classList.toggle('on', m.index !== 0);
+  }
   function toggleBuild() {
     LEN.toggleBuild();
     el.buildToggle.classList.toggle('on', LEN.getBuildOpts().buildMode);
@@ -65,10 +71,14 @@ LEN.ui = (function () {
   function bindInput() {
     tbtns.forEach((b, i) => b.addEventListener('click', () => selectTower(i)));
     el.buildToggle.addEventListener('click', toggleBuild);
+    el.target.addEventListener('click', () => LEN.cycleTarget());
     el.pause.addEventListener('click', togglePause);
     el.mute.addEventListener('click', toggleMute);
     el.play.addEventListener('click', start);
     el.restart.addEventListener('click', () => window.location.reload());
+    window.addEventListener('keydown', e => {
+      if (e.key === 't' || e.key === 'T') LEN.cycleTarget();
+    });
   }
 
   /* called from main's frame loop */
@@ -76,5 +86,5 @@ LEN.ui = (function () {
     if (bannerTimer > 0) { bannerTimer -= dt; if (bannerTimer <= 0) el.wb.classList.remove('show'); }
   }
 
-  return { el, tbtns, updateHud, markDirty, consumeDirty, showBanner, toggleBuild, selectTower, syncTowerButtons, bindInput, tick };
+  return { el, tbtns, updateHud, markDirty, consumeDirty, showBanner, toggleBuild, selectTower, syncTowerButtons, updateTargetBtn, bindInput, tick };
 })();

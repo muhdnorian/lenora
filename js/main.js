@@ -8,6 +8,11 @@ LEN.setTowerType = setTowerType;
 LEN.toggleBuild = toggleBuild;
 LEN.getBuildOpts = () => state;
 LEN.addScore = addScore;
+LEN.cycleTarget = cycleTarget;
+LEN.getTargetMode = () => ({ index: state.targeting, label: TARGET_MODES[state.targeting] });
+
+/* tower targeting priority: closest / first(most advanced) / weakest (#15) */
+const TARGET_MODES = ['closest', 'first', 'weakest'];
 
 const state = {
   resources: 90,
@@ -18,6 +23,7 @@ const state = {
   paused: false,
   buildMode: false,
   towerType: 0,
+  targeting: 0,
   calmTimer: LEN.CFG.wave.calm,
   timeOfDay: 0.28,      // start mid-morning so the first waves are sunny
   spawning: false,
@@ -37,6 +43,7 @@ ui.bindInput();
 /* ---------------- game-flow controls (referenced above) ---------------- */
 function addScore(n) { state.score += n; ui.markDirty(); }
 function setTowerType(i) { state.towerType = i; updateGhost(); };
+function cycleTarget() { state.targeting = (state.targeting + 1) % TARGET_MODES.length; ui.updateTargetBtn(); }
 function toggleBuild() { state.buildMode = !state.buildMode; updateGhost(); }
 function togglePause() {
   if (!state.running || state.gameOver) return;
@@ -81,6 +88,12 @@ function startNextWave() {
 const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
 if (isTouch) document.body.classList.add('touch');
 const joy = { active: false, dx: 0, dy: 0 };
+
+/* right-click on a placed tower sells it for a refund (#14) */
+window.addEventListener('contextmenu', e => {
+  const t = towers.pickFromScreen(e.clientX, e.clientY);
+  if (t) { e.preventDefault(); const r = towers.sell(t); if (r) { state.resources += r; LEN.audio.blip(true); ui.updateHud(state); } }
+});
 
 /* ---------------- keyboard ---------------- */
 const keys = {};
@@ -244,13 +257,18 @@ function updateGathering(dt) {
 
 /* ---- towers target & fire ---- */
 function updateTowers(dt) {
+  const mode = TARGET_MODES[state.targeting];
   for (const t of towers.entities) {
     t.cooldown -= dt;
     t.turret.rotation.y += dt * 0.6;
     let target = null, best = Infinity;
     for (const e of enemies.all) {
       const d = t.pos.distanceTo(e.pos);
-      if (d < t.cfg.range && d < best) { best = d; target = e; }
+      let score;
+      if (mode === 'first') score = e.pos.length();   // most advanced toward the core
+      else if (mode === 'weakest') score = e.hp;    // lowest remaining HP
+      else score = d;                                 // closest
+      if (d < t.cfg.range && score < best) { best = score; target = e; }
     }
     if (target && t.cooldown <= 0) {
       t.cooldown = t.cfg.rate;
