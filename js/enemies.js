@@ -10,6 +10,73 @@ LEN.enemies = (function () {
     tank:    { color: 0xb39bc4, r: 1.4,  hpMul: 3.2,  speedMul: 0.5,  dmgMul: 2.6,  barY: 3.1, glow: 0xd0b0f0 },
   };
 
+  /* warden boss — appears every 5th wave, one of three rotating mechanics */
+  const BOSS_MECH = ['shield', 'heal', 'split'];
+  // glowing crown that overwrites the boss's emissive per mechanic
+  const BOSS_GLOW = { shield: 0x9fd6ff, heal: 0xa8e6a0, split: 0xefb2d0 };
+
+  /* every 5th wave sends a warden: big HP, plus a rotating unique mechanic */
+  function spawnBoss(wave) {
+    const cycle = Math.floor(wave / 5);
+    const mechanic = BOSS_MECH[cycle % BOSS_MECH.length];
+    const r = 2.4;
+    const baseHp = (CFG.wave.hpBase + wave * CFG.wave.hpPerWave) * 9;
+    const hp = baseHp;
+    const a = Math.random() * Math.PI * 2;
+    const pos = new THREE.Vector3(Math.cos(a) * (CFG.world + 7), 0, Math.sin(a) * (CFG.world + 7));
+    const g = new THREE.Group();
+
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x6c5b74, roughness: 0.7 });
+    const body = new THREE.Mesh(new THREE.SphereGeometry(r, 20, 16), bodyMat);
+    body.scale.set(1, 1.2, 0.95); body.position.y = r; body.castShadow = true;
+    const glow = new THREE.Mesh(new THREE.SphereGeometry(r * 0.4, 16, 12),
+      new THREE.MeshStandardMaterial({ color: 0xbfe3ff, emissive: BOSS_GLOW[mechanic], emissiveIntensity: 1.4, roughness: 0.3 }));
+    glow.position.y = r * 1.25;
+    // crown of spikes so it reads as a boss
+    const spikeMat = new THREE.MeshStandardMaterial({ color: 0x4a3f55, roughness: 0.6 });
+    for (let i = 0; i < 8; i++) {
+      const ang = (i / 8) * Math.PI * 2;
+      const spike = new THREE.Mesh(new THREE.ConeGeometry(0.5, 1.8, 6), spikeMat);
+      spike.position.set(Math.cos(ang) * r * 0.75, r * 2.4, Math.sin(ang) * r * 0.75);
+      spike.rotation.x = Math.PI * 0.85;
+      spike.rotation.z = ang;
+      spike.castShadow = true;
+      g.add(spike);
+    }
+    // two heavy feet
+    const footMat = new THREE.MeshStandardMaterial({ color: 0x4a3f55, roughness: 1 });
+    const fs = r * 0.3;
+    const f1 = new THREE.Mesh(new THREE.SphereGeometry(fs, 10, 8), footMat);
+    f1.position.set(-r * 0.4, r * 0.3, r * 0.3);
+    const f2 = f1.clone(); f2.position.x = r * 0.4;
+    // stern eyes
+    const eR = r * 0.14;
+    const eL = new THREE.Mesh(new THREE.SphereGeometry(eR, 8, 8), new THREE.MeshBasicMaterial({ color: 0xffe9c4 }));
+    eL.position.set(-r * 0.36, r * 1.2, r * 0.8);
+    const er2 = eL.clone(); er2.position.x = r * 0.36;
+    g.add(body, glow, f1, f2, eL, er2);
+
+    const bar = LEN.bars.make(6.5, 0.7);
+    bar.sprite.position.y = r * 2.6 + 2.2; g.add(bar.sprite);
+
+    g.position.copy(pos);
+    scene.add(g);
+
+    const e = {
+      group: g, pos, hp, maxHp: hp, boss: true, mechanic,
+      speed: CFG.wave.speed * 0.62, wob: Math.random() * 6.28,
+      killVal: Math.round(60 + wave * 9),
+      glow, bar, dmgMul: 1, collideR: r, attackCd: 0,
+      // mechanic state
+      shield: mechanic === 'shield' ? 16 : 0,   // absorbs this many hit events before it shatters
+      auraCd: 1.2,
+      healCd: 0,
+    };
+    LEN.bars.draw(bar, hp, hp);
+    enemies.push(e);
+    return e;
+  }
+
   /* mix of kinds grows with wave number */
   function pickType(wave) {
     const pool = [['drifter', 1]];
@@ -70,17 +137,52 @@ LEN.enemies = (function () {
 
   function hit(e, dmg) {
     if (e.hp <= 0) return false;   // already dead this frame — avoid double-awarding kill score
+    if (e.boss && e.shield > 0) {
+      // shield mechanic: absorbs this hit entirely, then shatters with a flash
+      e.shield--;
+      LEN.towers.puff(e.pos.clone(), 0xbfe3ff);
+      if (e.shield === 0) {
+        e.glow.material.emissiveIntensity = 0.4;   // dim to boss-glow after shield breaks
+        LEN.towers.puff(e.pos.clone(), 0x9fd6ff);
+      }
+      return false;
+    }
     e.hp -= dmg;
     LEN.bars.draw(e.bar, e.hp, e.maxHp);
-    LEN.towers.puff(e.pos.clone(), 0xeef3f5);
+    LEN.towers.puff(e.pos.clone(), e.boss ? 0xdcb7e8 : 0xeef3f5);
     if (e.hp <= 0) {
       scene.remove(e.group); remove(e);
       LEN.addScore(e.killVal + Math.floor(e.maxHp * 0.3));
+      // split mechanic: on death the warden shatters into a burst of drifters
+      if (e.boss && e.mechanic === 'split') {
+        for (let i = 0; i < 4; i++) {
+          const d = spawn(20);
+          d.pos.copy(e.pos);
+          d.group.position.copy(e.pos);
+        }
+      }
       return true;
     }
     return false;
   }
+
+  /* heal aura / ongoing boss behaviour — called from the sim loop */
+  function tickBoss(e, dt) {
+    if (e.mechanic === 'heal') {
+      e.auraCd -= dt;
+      if (e.auraCd <= 0) {
+        e.auraCd = 1.2;
+        for (const other of enemies) {
+          if (other.hp <= 0 || other === e) continue;
+          if (other.pos.distanceTo(e.pos) < 16 && other.hp < other.maxHp) {
+            other.hp = Math.min(other.maxHp, other.hp + 4);
+            LEN.bars.draw(other.bar, other.hp, other.maxHp);
+          }
+        }
+      }
+    }
+  }
   function remove(e) { const i = enemies.indexOf(e); if (i >= 0) enemies.splice(i, 1); }
 
-  return { all: enemies, spawn, hit, remove, TYPES };
+  return { all: enemies, spawn, spawnBoss, hit, remove, tickBoss, TYPES };
 })();
