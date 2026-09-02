@@ -24,9 +24,13 @@ jobs:
             node --check "$f"
           done
 
-      - name: Verify index.html references resolve
+      - name: Verify local index.html references resolve
         run: |
           set -e
-          grep -oE 'src="[^"]*\.js"' index.html | sed 's/src="//; s/"//' | while read ref; do
-            test -f "$ref" && echo "OK  $ref" || { echo "MISSING $ref"; exit 1; }
-          done
+          # only local js references (skip CDN / absolute URLs)
+          grep -oE 'src="[^"]*\.js"' index.html \
+            | sed 's/src="//; s/"//' \
+            | grep -vE '^(https?:)?//' \
+            | while read ref; do
+                test -f "$ref" && echo "OK  $ref" || { echo "MISSING $ref"; exit 1; }
+              done
