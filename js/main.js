@@ -52,6 +52,14 @@ function gameOver() {
   state.gameOver = true; state.running = false;
   ui.el.goWave.textContent = state.wave;
   ui.el.goScore.textContent = state.score;
+  // persistent meta-progression (#11): best wave / best score via localStorage
+  let meta = {};
+  try { meta = JSON.parse(localStorage.getItem('lenora.meta') || '{}'); } catch (e) {}
+  if (state.wave > (meta.bestWave || 0)) meta.bestWave = state.wave;
+  if (state.score > (meta.bestScore || 0)) meta.bestScore = state.score;
+  try { localStorage.setItem('lenora.meta', JSON.stringify(meta)); } catch (e) {}
+  ui.el.goBest.textContent = meta.bestWave || 0;
+  ui.el.goBestScore.textContent = meta.bestScore || 0;
   ui.el.go.style.display = 'flex';
 }
 function updateGhost() {

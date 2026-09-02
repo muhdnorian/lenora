@@ -62,8 +62,14 @@ LEN.audio = (function () {
     o.connect(g); g.connect(master);
     o.start(); o.stop(actx.currentTime + 0.55);
   }
-  function setMusic(on) { musicOn = on; if (master) master.gain.value = on ? 0.7 : 0; }
+  function setMusic(on) { musicOn = on; if (!muted && master) master.gain.value = on ? 0.7 : 0; }
+  function toggleMute() {
+    muted = !muted;
+    if (master) master.gain.value = muted ? 0 : (musicOn ? 0.7 : 0);
+    return muted;
+  }
+  function isMuted() { return muted; }
   function resume() { if (actx && actx.state === 'suspended') actx.resume(); }
 
-  return { init, resume, blip, aura, setMusic, isOn: () => musicOn };
+  return { init, resume, blip, aura, setMusic, toggleMute, isMuted, isOn: () => musicOn };
 })();
