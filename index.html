@@ -98,6 +98,9 @@
   #playBtn:hover{transform:translateY(-2px); box-shadow:0 14px 32px #6fa8a060;}
   #pause{top:16px; right:16px; padding:10px 14px; border-radius:12px; background:var(--panel);
     border:1px solid var(--line); cursor:pointer; font-size:13px; color:var(--ink); backdrop-filter:blur(6px);}
+  #mute{top:16px; right:64px; padding:10px 12px; border-radius:12px; background:var(--panel);
+    border:1px solid var(--line); cursor:pointer; font-size:15px; color:var(--ink); backdrop-filter:blur(6px);}
+  #mute.muted{opacity:.55;}
   #gameover{
     display:none; position:fixed; inset:0; z-index:45; flex-direction:column; align-items:center; justify-content:center;
     background:rgba(40,50,55,.35); backdrop-filter:blur(4px); text-align:center; gap:10px;
@@ -186,6 +189,7 @@
   <button class="recruit" data-i="2"><em style="background:#9fbf8b"></em>Bramble<small>45</small></button>
 </div>
 <button id="pause" class="ui">⏸</button>
+<button id="mute" class="ui" title="Mute">🔊</button>
 
 <div id="start">
   <h1>len<em>o</em>ra</h1>
@@ -202,6 +206,7 @@
   <div class="card">
     <h2>The valley rests</h2>
     <div class="st">You defended to <b id="goWave">0</b> waves · score <b id="goScore">0</b></div>
+    <div class="soft">Best wave <b id="goBest">0</b> · best score <b id="goBestScore">0</b></div>
     <button id="restart">Play again</button>
   </div>
 </div>
