@@ -29,6 +29,7 @@ const state = {
   spawning: false,
   waveSpawnQueue: 0,
   spawnTimer: 0,
+  bossSpawned: false,
   gatherTimer: 0,
   gameOver: false,
 };
@@ -80,7 +81,12 @@ function startNextWave() {
   state.calmTimer = LEN.CFG.wave.calm;   // re-arm the pause between waves
   state.waveSpawnQueue = Math.floor(LEN.CFG.wave.countBase + state.wave * LEN.CFG.wave.countPerWave);
   state.spawning = true;
-  ui.showBanner('Wave ' + state.wave, 'drifters appear…');
+  state.bossSpawned = false;   // every 5th wave also sends a warden
+  if (state.wave % 5 === 0) {
+    ui.showBanner('Wave ' + state.wave, 'A warden draws near…');
+  } else {
+    ui.showBanner('Wave ' + state.wave, 'drifters appear…');
+  }
   ui.markDirty();
 }
 
@@ -269,6 +275,7 @@ function updateTowers(dt) {
     t.turret.rotation.y += dt * 0.6;
     let target = null, best = Infinity;
     for (const e of enemies.all) {
+      if (e.hp <= 0) continue;
       const d = t.pos.distanceTo(e.pos);
       let score;
       if (mode === 'first') score = e.pos.length();   // most advanced toward the core
@@ -334,6 +341,8 @@ function updateEnemies(dt) {
     e.group.rotation.y = Math.atan2(-e.pos.x, -e.pos.z);
     // inner glow fades as the enemy is damaged
     e.glow.material.emissiveIntensity = (0.25 + 1.2 * (e.hp / e.maxHp)) * (1 + LEN.world.night * 0.7); // glow brighter at night
+    // boss mechanics run in the same loop (heal aura etc.)
+    if (e.boss) enemies.tickBoss(e, dt);
     // contact damage against nearby army units
     e.attackCd -= dt;
     if (e.attackCd <= 0) {
@@ -362,6 +371,11 @@ function updateWaves(dt) {
     if (state.spawnTimer <= 0) {
       state.spawnTimer = LEN.CFG.wave.spawnInterval;
       enemies.spawn(state.wave);
+      // every 5th wave: send the warden boss alongside the normal spawn
+      if (state.wave % 5 === 0 && !state.bossSpawned) {
+        state.bossSpawned = true;
+        enemies.spawnBoss(state.wave);
+      }
       state.waveSpawnQueue--;
       if (state.waveSpawnQueue <= 0) state.spawning = false;
     }
