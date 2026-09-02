@@ -1,7 +1,10 @@
 /* audio.js — soft WebAudio ambient pad + one-shot UI blips */
 LEN.audio = (function () {
   const Ctx = window.AudioContext || window.webkitAudioContext;
+  const MUTE_KEY = 'lenora.muted';
   let actx = null, master = null, musicOn = false, muted = false;
+  // (#47) restore the persisted mute preference on load so a reload doesn't unmute
+  try { muted = localStorage.getItem(MUTE_KEY) === '1'; } catch (e) {}
 
   function init() {
     if (actx) return;
@@ -65,6 +68,7 @@ LEN.audio = (function () {
   function setMusic(on) { musicOn = on; if (!muted && master) master.gain.value = on ? 0.7 : 0; }
   function toggleMute() {
     muted = !muted;
+    try { localStorage.setItem(MUTE_KEY, muted ? '1' : '0'); } catch (e) {}
     if (master) master.gain.value = muted ? 0 : (musicOn ? 0.7 : 0);
     return muted;
   }

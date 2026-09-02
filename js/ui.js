@@ -7,6 +7,7 @@ LEN.ui = (function () {
     buildToggle: $('buildToggle'), buildToggleT: $('buildToggleT'),
     pause: $('pause'), start: $('start'), play: $('playBtn'),
     go: $('gameover'), goWave: $('goWave'), goScore: $('goScore'), goBest: $('goBest'), goBestScore: $('goBestScore'), restart: $('restart'),
+    stBest: $('stBestWave'), stBestScore: $('stBestScore'),
     mute: $('mute'),
   };
   const tbtns = [...document.querySelectorAll('.tbtn')];
@@ -61,6 +62,7 @@ LEN.ui = (function () {
   }
   function togglePause() { LEN.togglePause(); el.pause.textContent = LEN.getBuildOpts().paused ? '▶' : '⏸'; }
   function toggleMute() { const muted = LEN.audio.toggleMute(); el.mute.textContent = muted ? '🔇' : '🔊'; el.mute.classList.toggle('muted', muted); }
+  function syncMute() { const muted = LEN.audio.isMuted(); el.mute.textContent = muted ? '🔇' : '🔊'; el.mute.classList.toggle('muted', muted); }
 
   function bindInput() {
     tbtns.forEach((b, i) => b.addEventListener('click', () => selectTower(i)));
@@ -69,6 +71,7 @@ LEN.ui = (function () {
     el.mute.addEventListener('click', toggleMute);
     el.play.addEventListener('click', start);
     el.restart.addEventListener('click', () => window.location.reload());
+    syncMute();   // reflect the persisted mute preference on load (#47)
   }
 
   /* called from main's frame loop */
