@@ -21,6 +21,7 @@ LEN.CFG = {
     dmgPerWave: 1.0,          // soften damage growth vs baseHP 100 (was 1.4)
   },
   crystal: { capacity: 42, count: 14 },
+  dayNight: { period: 240 },   // seconds for a full gentle day/night cycle
   projectileMaxLife: 4,          // seconds a homing projectile may live before expiring
 
   towers: [

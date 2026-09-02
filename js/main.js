@@ -19,6 +19,7 @@ const state = {
   buildMode: false,
   towerType: 0,
   calmTimer: LEN.CFG.wave.calm,
+  timeOfDay: 0.28,      // start mid-morning so the first waves are sunny
   spawning: false,
   waveSpawnQueue: 0,
   spawnTimer: 0,
@@ -165,6 +166,9 @@ function update(dt) {
   updateEnemies(dt);
   updateWaves(dt);
   updateAmbient(dt);
+  // slow gentle day/night cycle
+  state.timeOfDay = (state.timeOfDay + dt / LEN.CFG.dayNight.period) % 1;
+  LEN.world.setTime(state.timeOfDay);
 }
 
 /* ---- player ---- */
@@ -294,7 +298,7 @@ function updateEnemies(dt) {
     e.group.position.y = Math.abs(Math.sin(e.wob)) * 0.15;
     e.group.rotation.y = Math.atan2(-e.pos.x, -e.pos.z);
     // inner glow fades as the enemy is damaged
-    e.glow.material.emissiveIntensity = 0.25 + 1.2 * (e.hp / e.maxHp);
+    e.glow.material.emissiveIntensity = (0.25 + 1.2 * (e.hp / e.maxHp)) * (1 + LEN.world.night * 0.7); // glow brighter at night
     // contact damage against nearby army units
     e.attackCd -= dt;
     if (e.attackCd <= 0) {
@@ -344,6 +348,7 @@ function updateAmbient(dt) {
   }
   core.orb.rotation.y += dt * 0.5;
   core.orb.position.y = 6.3 + Math.sin(performance.now() * 0.001) * 0.1;
+  core.orb.material.emissiveIntensity = 0.9 + LEN.world.night * 2.2;   // core halo reads at night
   LEN.world.ring.rotation.z += dt * 0.1;
   for (const p of LEN.puffs.slice()) {
     p.life += dt;
@@ -358,6 +363,7 @@ function updateAmbient(dt) {
 }
 
 /* ---------------- init ---------------- */
+LEN.world.setTime(state.timeOfDay);   // apply the starting day phase before first frame
 ui.updateHud(state);
 camPos.set(player.pos.x + 6, 46, player.pos.z + 40);
 camTarget.copy(player.pos);
