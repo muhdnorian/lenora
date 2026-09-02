@@ -150,6 +150,7 @@ LEN.enemies = (function () {
     e.hp -= dmg;
     LEN.bars.draw(e.bar, e.hp, e.maxHp);
     LEN.towers.puff(e.pos.clone(), e.boss ? 0xdcb7e8 : 0xeef3f5);
+    LEN.fx.spark(e.pos.clone(), 0xe7f2f6, { count: 5, speed: 3.2, life: 0.5, size: 0.09 });
     if (e.hp <= 0) {
       scene.remove(e.group); remove(e);
       LEN.addScore(e.killVal + Math.floor(e.maxHp * 0.3));

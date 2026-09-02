@@ -79,6 +79,7 @@ function updateGhost() {
 /* ---------------- wave spawning ---------------- */
 function startNextWave() {
   state.wave++;
+  waveActive = true;
   state.calmTimer = LEN.CFG.wave.calm;   // re-arm the pause between waves
   state.waveSpawnQueue = Math.floor(LEN.CFG.wave.countBase + state.wave * LEN.CFG.wave.countPerWave);
   state.spawning = true;
@@ -181,6 +182,7 @@ const vDir = new THREE.Vector3();
 const vToCore = new THREE.Vector3();
 
 /* ---------------- main loop ---------------- */
+let waveActive = false;
 let last = performance.now();
 function frame(now) {
   requestAnimationFrame(frame);
@@ -385,6 +387,13 @@ function updateWaves(dt) {
     }
   }
   if (!state.spawning && state.waveSpawnQueue <= 0 && enemies.all.length === 0) {
+    if (waveActive) {
+      waveActive = false;
+      // wave-clear burst: expanding gold + teal rings and a rising sparkle at the core (#45)
+      LEN.fx.ring(new THREE.Vector3(0, 0, 0), 0xffd98a, 14);
+      LEN.fx.ring(new THREE.Vector3(0, 0, 0), 0x8fe0c9, 9);
+      LEN.fx.spark(new THREE.Vector3(0, 3, 0), 0xffe2a8, { count: 26, speed: 7, life: 0.9, size: 0.14 });
+    }
     state.calmTimer -= dt;
     if (state.calmTimer <= 0) startNextWave();
   }
@@ -414,6 +423,7 @@ function updateAmbient(dt) {
       LEN.puffs.splice(i, 1);
     }
   }
+  LEN.fx.update(dt);
 }
 
 /* ---------------- init ---------------- */
