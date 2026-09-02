@@ -35,7 +35,7 @@ ui.bindInput();
 
 /* ---------------- game-flow controls (referenced above) ---------------- */
 function addScore(n) { state.score += n; }
-function setTowerType(i) { state.towerType = i; };
+function setTowerType(i) { state.towerType = i; updateGhost(); };
 function toggleBuild() { state.buildMode = !state.buildMode; updateGhost(); }
 function togglePause() {
   if (!state.running || state.gameOver) return;
