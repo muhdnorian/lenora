@@ -79,7 +79,6 @@ function updateGhost() {
 /* ---------------- wave spawning ---------------- */
 function startNextWave() {
   state.wave++;
-  state.waveClearPlayed = false;
   state.calmTimer = LEN.CFG.wave.calm;   // re-arm the pause between waves
   state.waveSpawnQueue = Math.floor(LEN.CFG.wave.countBase + state.wave * LEN.CFG.wave.countPerWave);
   state.spawning = true;
@@ -386,7 +385,6 @@ function updateWaves(dt) {
     }
   }
   if (!state.spawning && state.waveSpawnQueue <= 0 && enemies.all.length === 0) {
-    if (state.wave > 0 && !state.waveClearPlayed) { state.waveClearPlayed = true; LEN.audio.waveClear(); }
     state.calmTimer -= dt;
     if (state.calmTimer <= 0) startNextWave();
   }
