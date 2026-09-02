@@ -10,13 +10,21 @@ LEN.ui = (function () {
   };
   const tbtns = [...document.querySelectorAll('.tbtn')];
   let bannerTimer = 0;
+  // last rendered values — skip DOM writes when nothing changed (updateHud is called every frame)
+  const last = { res: null, life: null, wave: null, score: null, dis: null };
 
   function updateHud(state) {
-    el.res.textContent = Math.floor(state.resources);
-    el.life.textContent = Math.max(0, Math.floor(state.lives));
-    el.wave.textContent = state.wave;
-    el.score.textContent = state.score;
-    tbtns.forEach((b, i) => b.classList.toggle('dis', state.resources < LEN.CFG.towers[i].cost));
+    const res = Math.floor(state.resources);
+    if (res !== last.res) { el.res.textContent = res; last.res = res; }
+    const life = Math.max(0, Math.floor(state.lives));
+    if (life !== last.life) { el.life.textContent = life; last.life = life; }
+    if (state.wave !== last.wave) { el.wave.textContent = state.wave; last.wave = state.wave; }
+    if (state.score !== last.score) { el.score.textContent = state.score; last.score = state.score; }
+    const dis = tbtns.map((b, i) => state.resources < LEN.CFG.towers[i].cost);
+    if (JSON.stringify(dis) !== last.dis) {
+      tbtns.forEach((b, i) => b.classList.toggle('dis', dis[i]));
+      last.dis = JSON.stringify(dis);
+    }
   }
 
   function selectTower(i) {
