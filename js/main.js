@@ -253,7 +253,8 @@ function updateTowers(dt) {
 /* ---- projectiles ---- */
 function updateProjectiles(dt) {
   for (const p of LEN.projectiles.slice()) {
-    if (!p.target || !p.target.group.parent) {
+    p.age += dt;
+    if (!p.target || !p.target.group.parent || p.age > p.maxAge) {
       LEN.world.scene.remove(p.mesh);
       LEN.projectiles.splice(LEN.projectiles.indexOf(p), 1);
       continue;
