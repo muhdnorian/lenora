@@ -61,6 +61,7 @@ function updateGhost() {
 /* ---------------- wave spawning ---------------- */
 function startNextWave() {
   state.wave++;
+  state.calmTimer = LEN.CFG.wave.calm;   // re-arm the pause between waves
   state.waveSpawnQueue = Math.floor(LEN.CFG.wave.countBase + state.wave * LEN.CFG.wave.countPerWave);
   state.spawning = true;
   ui.showBanner('Wave ' + state.wave, 'drifters appear…');
@@ -305,7 +306,7 @@ function updateEnemies(dt) {
       }
     }
     if (e.pos.length() < 5) {
-      state.lives -= (LEN.CFG.wave.dmgBase + state.wave * LEN.CFG.wave.dmgPerWave);
+      state.lives -= (LEN.CFG.wave.dmgBase + state.wave * LEN.CFG.wave.dmgPerWave) * e.dmgMul;
       enemies.remove(e);
       ui.updateHud(state);
       if (state.lives <= 0) { state.lives = 0; ui.updateHud(state); gameOver(); return; }
