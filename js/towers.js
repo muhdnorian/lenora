@@ -122,6 +122,28 @@ LEN.towers = (function () {
     LEN.puffs.push({ mesh: m, life: 0 });
   }
 
+  /* ---- range circle (#9 / #58): show a tower's firing radius under the cursor ---- */
+  const rangeCircle = new THREE.Mesh(
+    new THREE.RingGeometry(0.97, 1, 64),
+    new THREE.MeshBasicMaterial({ color: 0x6fa8a0, transparent: true, opacity: 0.32, side: THREE.DoubleSide, depthWrite: false })
+  );
+  rangeCircle.rotation.x = -Math.PI / 2;
+  rangeCircle.position.y = 0.09;
+  rangeCircle.visible = false;
+  scene.add(rangeCircle);
+  let rangeVisible = false;
+  function showRange(x, z, radius) {
+    rangeCircle.scale.setScalar(radius);
+    rangeCircle.position.x = x;
+    rangeCircle.position.z = z;
+    rangeCircle.visible = true;
+    rangeVisible = true;
+  }
+  function hideRange() {
+    rangeCircle.visible = false;
+    rangeVisible = false;
+  }
+
   /* ---- build ghost + cell validation ---- */
   const ghost = (() => {
     const g = new THREE.Group();
@@ -174,6 +196,15 @@ LEN.towers = (function () {
     ghost.rangeRing.material.opacity = 0.25;
     ghost.g.visible = buildMode && mouseOnGround;
     ghost.rng.g.visible = buildMode && mouseOnGround;
+    // #9 / #58: placed towers should also reveal their firing radius on hover. The build
+    // ghost already draws its own range ring, so this covers the non-build hover case only.
+    if (mouseOnGround && !buildMode) {
+      const hovered = entities.find(t => t.col === col && t.row === row);
+      if (hovered) showRange(hovered.pos.x, hovered.pos.z, hovered.cfg.range);
+      else hideRange();
+    } else {
+      hideRange();
+    }
   }
 
   function pointerEvent(e) {
@@ -189,5 +220,5 @@ LEN.towers = (function () {
     }
   }
 
-  return { entities, place, damageUnit, sell, pickFromScreen, fire, puff, cellValid, updateGhost, pointerEvent, hoverCell, isMouseOnGround: () => mouseOnGround };
+  return { entities, place, damageUnit, sell, pickFromScreen, fire, puff, cellValid, updateGhost, pointerEvent, hoverCell, isMouseOnGround: () => mouseOnGround, isRangeVisible: () => rangeVisible };
 })();
