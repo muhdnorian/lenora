@@ -143,6 +143,13 @@ LEN.towers = (function () {
     return { g, rng, rangeRing };
   })();
 
+  /* ring shown around a placed tower when it is hovered outside build mode (#48) */
+  const hoverRing = new THREE.Mesh(new THREE.RingGeometry(0.98, 1, 48),
+    new THREE.MeshBasicMaterial({ color: 0x6fa8a0, transparent: true, opacity: 0.32, side: THREE.DoubleSide, depthWrite: false }));
+  hoverRing.rotation.x = -Math.PI / 2; hoverRing.position.y = 0.12;
+  hoverRing.visible = false;
+  scene.add(hoverRing);
+
   const ray = new THREE.Raycaster();
   const pointer = new THREE.Vector2();
   const hoverCell = { col: 0, row: 0 };
@@ -174,6 +181,18 @@ LEN.towers = (function () {
     ghost.rangeRing.material.opacity = 0.25;
     ghost.g.visible = buildMode && mouseOnGround;
     ghost.rng.g.visible = buildMode && mouseOnGround;
+
+    // hovering a placed tower shows its firing range even outside build mode (#48)
+    const hovered = (!buildMode && mouseOnGround)
+      ? entities.find(t => !t.dead && t.col === col && t.row === row) : null;
+    if (hovered) {
+      hoverRing.position.set(hovered.pos.x, 0.12, hovered.pos.z);
+      hoverRing.scale.setScalar(hovered.cfg.range);
+      hoverRing.material.color.setHex(hovered.cfg.color);
+      hoverRing.visible = true;
+    } else {
+      hoverRing.visible = false;
+    }
   }
 
   function pointerEvent(e) {
@@ -185,8 +204,8 @@ LEN.towers = (function () {
     if (hit) {
       hoverCell.col = Math.floor(hit.point.x / CFG.grid);
       hoverCell.row = Math.floor(hit.point.z / CFG.grid);
-      updateGhost(hoverCell.col, hoverCell.row, LEN.getBuildOpts());
     }
+    updateGhost(hoverCell.col, hoverCell.row, LEN.getBuildOpts());
   }
 
   return { entities, place, damageUnit, sell, pickFromScreen, fire, puff, cellValid, updateGhost, pointerEvent, hoverCell, isMouseOnGround: () => mouseOnGround };
