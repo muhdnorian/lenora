@@ -103,6 +103,15 @@
     box-shadow:0 10px 26px #6fa8a040; transition:.2s;
   }
   #playBtn:hover{transform:translateY(-2px); box-shadow:0 14px 32px #6fa8a060;}
+  /* difficulty picker on the start overlay (#53) */
+  #diffRow{display:flex; gap:8px; align-items:center; margin-top:4px;}
+  #diffRow .dlabel{font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin-right:4px;}
+  .diffbtn{
+    border:1px solid var(--line); background:#fff; color:var(--ink);
+    padding:8px 16px; border-radius:900px; cursor:pointer; font-size:14px; font-weight:600; transition:.15s;
+  }
+  .diffbtn:hover{transform:translateY(-2px);}
+  .diffbtn.sel{background:var(--accent); color:#fff; border-color:var(--accent); box-shadow:0 6px 18px #6fa8a040;}
   #pause{top:16px; right:16px; padding:10px 14px; border-radius:12px; background:var(--panel);
     border:1px solid var(--line); cursor:pointer; font-size:13px; color:var(--ink); backdrop-filter:blur(6px);}
   /* ---------- minimap ---------- */
@@ -219,13 +228,19 @@
     <div><b>1 · 2 · 3</b><span>choose a unit</span></div>
     <div><b>B or click</b><span>recruit mode · tap/click land</span></div>
   </div>
+  <div id="diffRow">
+    <span class="dlabel">Difficulty</span>
+    <button class="diffbtn" data-diff="calm">Calm</button>
+    <button class="diffbtn sel" data-diff="normal">Normal</button>
+    <button class="diffbtn" data-diff="relentless">Relentless</button>
+  </div>
   <button id="playBtn">Begin the valley</button>
 </div>
 
 <div id="gameover">
   <div class="card">
     <h2>The valley rests</h2>
-    <div class="st">You defended to <b id="goWave">0</b> waves · score <b id="goScore">0</b></div>
+    <div class="st">You defended to <b id="goWave">0</b> waves · score <b id="goScore">0</b> · <span id="goDiff">Normal</span></div>
     <div class="soft">Best wave <b id="goBest">0</b> · best score <b id="goBestScore">0</b></div>
     <button id="restart">Play again</button>
   </div>

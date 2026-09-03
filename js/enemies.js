@@ -97,8 +97,9 @@ LEN.enemies = (function () {
 
   function spawn(wave) {
     const type = TYPES[pickType(wave)];
+    const diff = (LEN.diff && LEN.diff()) || {};
     const baseHp = CFG.wave.hpBase + wave * CFG.wave.hpPerWave;
-    const hp = baseHp * type.hpMul;
+    const hp = baseHp * type.hpMul * (diff.hpMul || 1);
     const a = Math.random() * Math.PI * 2;
     const r = CFG.world + 7;
     const g = new THREE.Group();
@@ -136,7 +137,7 @@ LEN.enemies = (function () {
     const e = {
       group: g, pos: g.position.clone(), hp, maxHp: hp,
       armor, maxArmor: armor,
-      speed: CFG.wave.speed * type.speedMul * LEN.entities.random(0.9, 1.1),
+      speed: CFG.wave.speed * type.speedMul * (diff.speedMul || 1) * LEN.entities.random(0.9, 1.1),
       wob: Math.random() * 6.28, killVal: Math.round(12 * type.hpMul),
       type, glow, bar, dmgMul: type.dmgMul, collideR: type.r, attackCd: 0,
     };

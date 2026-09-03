@@ -9,8 +9,19 @@ LEN.CFG = {
   player: { speed: 9.5, radius: 1.5 },
   gather: { radius: 7.5, rate: 20 },
   baseHP: 100,
+  // start-resource budget — used to seed a run (difficulty may scale it, #53)
+  startRes: 90,
+  /* optional difficulty presets (#53). 'normal' ≈ legacy curve; 'calm' relaxes it for
+   * a gentle intro; 'relentless' scales HP/count/speed and leak damage up so the game
+   * stays a real tower defense for experienced players. Every run reads its preset through
+   * LEN.diff() so enemies, waves and leaks share one source of truth. */
+  difficulty: {
+    calm:       { label: 'Calm',       hpMul: 0.8,  countMul: 0.8,  speedMul: 0.9,  leakMul: 0.7,  resMul: 1.2, calm: 12 },
+    normal:     { label: 'Normal',      hpMul: 1.0,  countMul: 1.0,  speedMul: 1.0,  leakMul: 1.0,  resMul: 1.0, calm: 8  },
+    relentless:{ label: 'Relentless',  hpMul: 1.4,  countMul: 1.35, speedMul: 1.15, leakMul: 1.5,  resMul: 0.8, calm: 5  },
+  },
   wave: {
-    calm: 8,                  // seconds between waves
+    calm: 8,                 // seconds between waves (overridden by the chosen difficulty, #53)
     spawnInterval: 0.62,       // continuous pressure: faster cadence than legacy 0.72
     countBase: 5,
     countPerWave: 2.0,        // wave size grows briskly — every wave must be answered

@@ -13,10 +13,14 @@ LEN.getTargetMode = () => ({ index: state.targeting, label: TARGET_MODES[state.t
 
 /* tower targeting priority: closest / first(most advanced) / weakest (#15) */
 const TARGET_MODES = ['closest', 'first', 'weakest'];
+LEN.setDifficulty = setDifficulty;
+LEN.diff = () => LEN.CFG.difficulty[state.diff] || LEN.CFG.difficulty.normal;
+LEN.getDifficultyKey = () => state.diff;
 
 const state = {
-  resources: 90,
+  resources: LEN.CFG.startRes,
   lives: LEN.CFG.baseHP,
+  diff: 'normal',
   wave: 0,
   score: 0,
   running: false,
@@ -52,10 +56,16 @@ function togglePause() {
   if (!state.running || state.gameOver) return;
   state.paused = !state.paused;
 }
+function setDifficulty(key) {
+  if (!LEN.CFG.difficulty[key]) return;
+  state.diff = key;
+  ui.selectDifficulty(key);
+}
 function startGame() {
   state.running = true;
   state.paused = false;
-  ui.showBanner('Wave 1', 'drifters approach…');
+  state.resources = Math.floor(LEN.CFG.startRes * LEN.diff().resMul);
+  ui.showBanner('Wave 1', LEN.diff().label + ' — drifters approach…');
   ui.updateHud(state);
   updateGhost();
 }
@@ -64,6 +74,7 @@ function gameOver() {
   LEN.audio.lose();
   ui.el.goWave.textContent = state.wave;
   ui.el.goScore.textContent = state.score;
+  ui.el.goDiff.textContent = LEN.diff().label;
   // persistent meta-progression (#11): best wave / best score via localStorage
   let meta = {};
   try { meta = JSON.parse(localStorage.getItem('lenora.meta') || '{}'); } catch (e) {}
@@ -82,11 +93,11 @@ function updateGhost() {
 function startNextWave() {
   state.wave++;
   waveActive = true;
-  state.calmTimer = LEN.CFG.wave.calm;   // re-arm the pause between waves
+  state.calmTimer = LEN.diff().calm;   // difficulty re-arms the pause between waves (#53)
   // every surgeEvery-th wave is a denser, faster-cadence rush the player must answer (#54)
   const surge = (state.wave % LEN.CFG.wave.surgeEvery) === 0;
   state.surge = surge;
-  state.waveSpawnQueue = Math.floor(LEN.CFG.wave.countBase + state.wave * LEN.CFG.wave.countPerWave) * (surge ? LEN.CFG.wave.surgeCountMul : 1);
+  state.waveSpawnQueue = Math.floor((LEN.CFG.wave.countBase + state.wave * LEN.CFG.wave.countPerWave) * LEN.diff().countMul) * (surge ? LEN.CFG.wave.surgeCountMul : 1);
   state.spawnInterval = surge ? LEN.CFG.wave.surgeSpawnInterval : LEN.CFG.wave.spawnInterval;
   state.spawning = true;
   state.bossSpawned = false;   // every 5th wave also sends a warden
@@ -371,7 +382,7 @@ function updateEnemies(dt) {
       }
     }
     if (e.pos.length() < 5) {
-      state.lives -= (LEN.CFG.wave.dmgBase + state.wave * LEN.CFG.wave.dmgPerWave) * e.dmgMul;
+      state.lives -= (LEN.CFG.wave.dmgBase + state.wave * LEN.CFG.wave.dmgPerWave) * e.dmgMul * LEN.diff().leakMul;
       enemies.remove(e);
       ui.markDirty();
       if (state.lives <= 0) { state.lives = 0; ui.markDirty(); gameOver(); return; }
