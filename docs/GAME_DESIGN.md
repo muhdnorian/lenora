@@ -67,9 +67,13 @@ Three creeps share a body blueprint, scaled by per-type multipliers (`js/enemies
 |------|----------|------|---------|---------|---------|
 | **Drifter** | 0.90 | 1.00 | 1.00 | 1.00 | wave 1 |
 | **Racer**  | 0.55 | 0.45 | 2.00 | 0.60 | wave 2 |
+| **Wisp**   | 0.60 | 0.62 | 2.60 | 0.90 | wave 3 | fast rusher — slips past weak walls |
 | **Tank**   | 1.40 | 3.20 | 0.50 | 2.60 | wave 4 |
+| **Bastion**| 1.55 | 3.90 | 0.42 | 2.20 | wave 5 | **armor** pool absorbs damage before HP |
 
-Encounter mix ramps with wave number (racer and tank weights grow with each wave, capped).
+Encounter mix ramps with wave number (racer and tank weights grow, plus wisp from
+wave 3 and bastion from wave 5). Armored bastions show a gold armor bar and absorb
+hits until it breaks — forcing enough sustained damage.
 
 **Base stats** scale with wave `W` (`js/config.js` → `CFG.wave`):
 - HP = `(hpBase + W · hpPerWave) · type.hpMul` = `(16 + 9W) · hpMul`
