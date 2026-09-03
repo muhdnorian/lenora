@@ -30,6 +30,8 @@ const state = {
   waveSpawnQueue: 0,
   spawnTimer: 0,
   bossSpawned: false,
+  spawnInterval: LEN.CFG.wave.spawnInterval,
+  surge: false,
   gatherTimer: 0,
   gameOver: false,
 };
@@ -81,10 +83,16 @@ function startNextWave() {
   state.wave++;
   waveActive = true;
   state.calmTimer = LEN.CFG.wave.calm;   // re-arm the pause between waves
-  state.waveSpawnQueue = Math.floor(LEN.CFG.wave.countBase + state.wave * LEN.CFG.wave.countPerWave);
+  // every surgeEvery-th wave is a denser, faster-cadence rush the player must answer (#54)
+  const surge = (state.wave % LEN.CFG.wave.surgeEvery) === 0;
+  state.surge = surge;
+  state.waveSpawnQueue = Math.floor(LEN.CFG.wave.countBase + state.wave * LEN.CFG.wave.countPerWave) * (surge ? LEN.CFG.wave.surgeCountMul : 1);
+  state.spawnInterval = surge ? LEN.CFG.wave.surgeSpawnInterval : LEN.CFG.wave.spawnInterval;
   state.spawning = true;
   state.bossSpawned = false;   // every 5th wave also sends a warden
-  if (state.wave % 5 === 0) {
+  if (surge) {
+    ui.showBanner('SURGE!', 'the field ruptures — hold the ring!');
+  } else if (state.wave % 5 === 0) {
     ui.showBanner('Wave ' + state.wave, 'A warden draws near…');
   } else {
     ui.showBanner('Wave ' + state.wave, 'drifters appear…');
@@ -376,7 +384,7 @@ function updateWaves(dt) {
   if (state.spawning && state.waveSpawnQueue > 0) {
     state.spawnTimer -= dt;
     if (state.spawnTimer <= 0) {
-      state.spawnTimer = LEN.CFG.wave.spawnInterval;
+      state.spawnTimer = state.spawnInterval;
       enemies.spawn(state.wave);
       // every 5th wave: send the warden boss alongside the normal spawn
       if (state.wave % 5 === 0 && !state.bossSpawned) {

@@ -85,8 +85,11 @@ hits until it breaks — forcing enough sustained damage.
 ## Waves & economy
 
 - **Starting resources:** 90. **Cap:** `RES_MAX = 240`.
-- **Wave size:** `⌊countBase + W · countPerWave⌋` = `⌊5 + 2.2W⌋` enemies,
-  spawned every `spawnInterval 0.72` s.
+- **Wave size:** `⌊countBase + W · countPerWave⌋` = `⌊5 + 2.0W⌋` enemies,
+  spawned every `spawnInterval 0.62` s.
+- **Surge waves:** every `surgeEvery 4`th wave is a denser, faster-cadence rush
+  (`surgeCountMul 1.45`, `surgeSpawnInterval 0.4` s) that breaks a passive wall.
+- **Leak damage** grows at `dmgPerWave 1.4` — a broken ring genuinely threatens the core.
 - **Between waves:** after the field is cleared, a `calm 8` s breather before the next
   wave.
 - **Money/sinks:** starting budget 90 buys one Cinder or Sprout+Bramble etc.; income comes

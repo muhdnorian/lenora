@@ -10,15 +10,20 @@ LEN.CFG = {
   gather: { radius: 7.5, rate: 20 },
   baseHP: 100,
   wave: {
-    calm: 10,                // seconds between waves (was 8 — gentle, less punishing gap)
-    spawnInterval: 0.72,
+    calm: 8,                  // seconds between waves
+    spawnInterval: 0.62,       // continuous pressure: faster cadence than legacy 0.72
     countBase: 5,
-    countPerWave: 1.6,      // wave size grows more gently (was 2.2)
-    hpBase: 15,
-    hpPerWave: 7,            // late-game HP curve flattened (was 9)
+    countPerWave: 2.0,        // wave size grows briskly — every wave must be answered
+    hpBase: 16,
+    hpPerWave: 8.5,           // towered DPS has to keep climbing
     speed: 2.3,
-    dmgBase: 7,              // less punishing core-leak base damage (was 8)
-    dmgPerWave: 1.0,          // soften damage growth vs baseHP 100 (was 1.4)
+    dmgBase: 8,               // core leaks hurt more immediately
+    dmgPerWave: 1.4,         // a broken wall genuinely threatens the core (#54)
+    // periodic "surge" pressure spikes — every surgeEvery-th wave arrives as a denser,
+    // faster-cadence rush that demands an active response rather than an AFK wall (#54)
+    surgeEvery: 4,
+    surgeCountMul: 1.45,
+    surgeSpawnInterval: 0.4,
   },
   crystal: { capacity: 42, count: 14 },
   dayNight: { period: 240 },   // seconds for a full gentle day/night cycle
