@@ -66,6 +66,9 @@ LEN.towers = (function () {
     LEN.bars.draw(bar, cfg.hp, cfg.hp);
     const t = { group: g, turret, orb, type, cfg, col, row, pos: new THREE.Vector3(x, 0, z), cooldown: 0, hp: cfg.hp, maxHp: cfg.hp, bar, collideR: cfg.collideR, dead: false };
     entities.push(t);
+    // placement glow: expanding ring + sparkle puff on the fresh unit (#45)
+    LEN.fx.ring(new THREE.Vector3(x, 0, z), cfg.color, 3);
+    LEN.fx.spark(new THREE.Vector3(x, 1, z), cfg.color, { count: 10, speed: 3.2, life: 0.7, size: 0.12 });
     return t;
   }
 
@@ -108,6 +111,7 @@ LEN.towers = (function () {
       new THREE.MeshBasicMaterial({ color: tower.cfg.orb }));
     p.position.copy(tower.pos); p.position.y = 3.0;
     scene.add(p);
+    LEN.fx.flash(new THREE.Vector3(tower.pos.x, 3.0, tower.pos.z), tower.cfg.orb, { life: 0.14, size: 0.55 });
     LEN.projectiles.push({
       mesh: p, target: enemy, speed: tower.cfg.projSpeed,
       dmg: tower.cfg.dmg, aoe: tower.cfg.aoe, from: tower.pos.clone(),
