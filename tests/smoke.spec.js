@@ -87,6 +87,37 @@ test('build flow: recruit mode toggles and a tower can be placed', async ({ page
   await expect(toggle).not.toHaveClass(/on/);
 });
 
+test('range circle (#9/#58): hovering a placed tower reveals its firing radius, empty ground hides it', async ({ page }) => {
+  await page.goto('/');
+  await page.click('#playBtn');
+  await expect(page.locator('#start')).toBeHidden();
+
+  // Move to the centre of the ground to establish hover state + record the cell under it.
+  const canvas = page.locator('#gameCanvas');
+  const box = await canvas.boundingBox();
+  const cx = box.x + box.width / 2;
+  const cy = box.y + box.height / 2;
+  await page.mouse.move(cx, cy);
+
+  // Plant a tower on the hovered cell (no matter how close/far from the core).
+  const cell = await page.evaluate(() => {
+    LEN.getBuildOpts().resources = 1000;
+    LEN.towers.place(LEN.towers.hoverCell.col, LEN.towers.hoverCell.row, 0);
+    return { col: LEN.towers.hoverCell.col, row: LEN.towers.hoverCell.row };
+  });
+
+  // Move away (empty ground → circle hidden), then back onto the tower (circle shown).
+  await page.mouse.move(cx + 220, cy + 220);
+  expect(await page.evaluate(() => LEN.towers.isRangeVisible())).toBe(false);
+  await page.mouse.move(cx, cy);
+  expect(await page.evaluate(() => LEN.towers.isRangeVisible())).toBe(true);
+
+  // The tower genuinely sits at the cell we planted.
+  const occupied = await page.evaluate(({ col, row }) =>
+    LEN.towers.entities.some(t => t.col === col && t.row === row), cell);
+  expect(occupied).toBe(true);
+});
+
 test('wave progression: waves advance automatically and the HUD reflects them', async ({ page }) => {
   const errors = [];
   page.on('pageerror', err => errors.push(`pageerror: ${err.message}`));
