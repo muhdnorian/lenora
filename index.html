@@ -105,6 +105,13 @@
   #playBtn:hover{transform:translateY(-2px); box-shadow:0 14px 32px #6fa8a060;}
   #pause{top:16px; right:16px; padding:10px 14px; border-radius:12px; background:var(--panel);
     border:1px solid var(--line); cursor:pointer; font-size:13px; color:var(--ink); backdrop-filter:blur(6px);}
+  /* ---------- minimap ---------- */
+  #minimap{
+    top:70px; right:18px; width:150px; height:150px; border-radius:14px;
+    background:var(--panel); border:1px solid var(--line);
+    box-shadow:0 6px 18px rgba(90,110,120,.14); backdrop-filter:blur(6px);
+    pointer-events:none;
+  }
   #mute{top:16px; right:64px; padding:10px 12px; border-radius:12px; background:var(--panel);
     border:1px solid var(--line); cursor:pointer; font-size:15px; color:var(--ink); backdrop-filter:blur(6px);}
   #mute.muted{opacity:.55;}
@@ -200,6 +207,7 @@
   <button class="recruit" data-i="2"><em style="background:#9fbf8b"></em>Bramble<small>45</small></button>
 </div>
 <button id="pause" class="ui">⏸</button>
+<canvas id="minimap" class="ui" width="150" height="150"></canvas>
 <button id="mute" class="ui" title="Mute">🔊</button>
 
 <div id="start">
@@ -234,6 +242,7 @@
 <script src="js/enemies.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/fx.js"></script>
+<script src="js/minimap.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>
