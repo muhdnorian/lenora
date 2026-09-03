@@ -59,6 +59,7 @@ function startGame() {
 }
 function gameOver() {
   state.gameOver = true; state.running = false;
+  LEN.audio.lose();
   ui.el.goWave.textContent = state.wave;
   ui.el.goScore.textContent = state.score;
   // persistent meta-progression (#11): best wave / best score via localStorage
@@ -287,6 +288,7 @@ function updateTowers(dt) {
       t.cooldown = t.cfg.rate;
       t.turret.rotation.y = Math.atan2(target.pos.x - t.pos.x, target.pos.z - t.pos.z);
       towers.fire(t, target);
+      LEN.audio.shoot(t.type);
       const flash = t.orb.material;
       flash.emissiveIntensity = 3;
       setTimeout(() => flash.emissiveIntensity = 0.7, 90);
@@ -315,8 +317,10 @@ function updateProjectiles(dt) {
           if (e.pos.distanceTo(p.target.pos) < p.aoe) enemies.hit(e, p.dmg);
         }
         towers.puff(p.target.pos.clone(), 0xffd7ad);
+        LEN.audio.explosion();
       } else {
         enemies.hit(p.target, p.dmg);
+        LEN.audio.hit();
       }
       LEN.world.scene.remove(p.mesh);
       LEN.projectiles.splice(i, 1);
